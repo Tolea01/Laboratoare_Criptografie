@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Playfair</title>
+  </head>
+  <body>
+    <h2>Playfair Cipher - Criptare / Decriptare</h2>
+
+    <label for="operation">Operația:</label>
+    <select id="operation">
+      <option value="encrypt">Criptare</option>
+      <option value="decrypt">Decriptare</option>
+    </select>
+    <br /><br />
+
+    <label for="message">Mesaj / Criptogramă:</label>
+    <textarea
+      id="message"
+      rows="4"
+      cols="50"
+      placeholder="Introdu mesajul..."
+    ></textarea>
+    <br /><br />
+
+    <label for="key">Cheie (minim 7 caractere):</label>
+    <input type="text" id="key" placeholder="Introdu cheia..." />
+    <br /><br />
+
+    <button onclick="processCipher()">Execută</button>
+
+    <p id="result"></p>
+    <p id="error" style="color: red"></p>
+
+    <script>
+      function validateInput(input, type) {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        for (let char of input) {
+          if (!alphabet.includes(char)) {
+            throw new Error(
+              `${type} conține caractere nepermise. Folosiți doar litere între 'A' și 'Z' și 'a' și 'z'.`
+            );
+          }
+        }
+      }
+
+      function prepareKey(key) {
+        key = key.toUpperCase();
+        const seen = new Set();
+        let preparedKey = "";
+
+        for (let char of key) {
+          if (!seen.has(char) && char !== " ") {
+            seen.add(char);
+            preparedKey += char;
+          }
+        }
+
+        if (preparedKey.length < 7) {
+          throw new Error("Cheia trebuie să aibă cel puțin 7 caractere.");
+        }
+
+        return preparedKey;
+      }
+
+      function generatePlayfairMatrix(key) {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let matrix = [];
+        let usedLetters = new Set();
+        key = prepareKey(key);
+
+        for (let char of key) {
+          if (!usedLetters.has(char)) {
+            matrix.push(char);
+            usedLetters.add(char);
+          }
+        }
+
+        for (let char of alphabet) {
+          if (!usedLetters.has(char)) {
+            matrix.push(char);
+            usedLetters.add(char);
+          }
+        }
+
+        return chunkArray(matrix, 5);
+      }
+
+      function chunkArray(arr, size) {
+        let result = [];
+        for (let i = 0; i < arr.length; i += size) {
+          result.push(arr.slice(i, i + size));
+        }
+        return result;
+      }
+
+      function findPosition(matrix, letter) {
+        for (let i = 0; i < matrix.length; i++) {
+          for (let j = 0; j < matrix[i].length; j++) {
+            if (matrix[i][j] === letter) {
+              return [i, j];
+            }
+          }
+        }
+        return null;
+      }
+
+      function encrypt(message, key) {
+        validateInput(message, "Mesajul");
+        const matrix = generatePlayfairMatrix(key);
+        let preparedMessage = prepareMessage(message);
+        let encryptedMessage = "";
+
+        for (let i = 0; i < preparedMessage.length; i += 2) {
+          let pair = preparedMessage.slice(i, i + 2);
+          let pos1 = findPosition(matrix, pair[0]);
+          let pos2 = findPosition(matrix, pair[1]);
+
+          if (pos1[0] === pos2[0]) {
+            encryptedMessage += matrix[pos1[0]][(pos1[1] + 1) % 5];
+            encryptedMessage += matrix[pos2[0]][(pos2[1] + 1) % 5];
+          } else if (pos1[1] === pos2[1]) {
+            // Dacă sunt pe aceeași coloană
+            encryptedMessage += matrix[(pos1[0] + 1) % 5][pos1[1]];
+            encryptedMessage += matrix[(pos2[0] + 1) % 5][pos2[1]];
+          } else {
+            encryptedMessage += matrix[pos1[0]][pos2[1]];
+            encryptedMessage += matrix[pos2[0]][pos1[1]];
+          }
+        }
+
+        return encryptedMessage;
+      }
+
+      function decrypt(ciphertext, key) {
+        validateInput(ciphertext, "Criptograma");
+        const matrix = generatePlayfairMatrix(key);
+        let decryptedMessage = "";
+
+        for (let i = 0; i < ciphertext.length; i += 2) {
+          let pair = ciphertext.slice(i, i + 2);
+          let pos1 = findPosition(matrix, pair[0]);
+          let pos2 = findPosition(matrix, pair[1]);
+
+          if (pos1[0] === pos2[0]) {
+            decryptedMessage += matrix[pos1[0]][(pos1[1] + 4) % 5];
+            decryptedMessage += matrix[pos2[0]][(pos2[1] + 4) % 5];
+          } else if (pos1[1] === pos2[1]) {
+            decryptedMessage += matrix[(pos1[0] + 4) % 5][pos1[1]];
+            decryptedMessage += matrix[(pos2[0] + 4) % 5][pos2[1]];
+          } else {
+            decryptedMessage += matrix[pos1[0]][pos2[1]];
+            decryptedMessage += matrix[pos2[0]][pos1[1]];
+          }
+        }
+
+        return decryptedMessage;
+      }
+
+      function prepareMessage(message) {
+        message = message.toUpperCase().replace(/\s/g, "");
+        let preparedMessage = "";
+
+        for (let i = 0; i < message.length; i += 2) {
+          let char1 = message[i];
+          let char2 = message[i + 1] || "X";
+
+          if (char1 === char2) {
+            preparedMessage += char1 + "X";
+            i--; // Reia perechea următoare
+          } else {
+            preparedMessage += char1 + char2;
+          }
+        }
+
+        return preparedMessage;
+      }
+
+      function processCipher() {
+        const operation = document.getElementById("operation").value;
+        const message = document.getElementById("message").value;
+        const key = document.getElementById("key").value;
+
+        const resultElement = document.getElementById("result");
+        const errorElement = document.getElementById("error");
+
+        resultElement.textContent = "";
+        errorElement.textContent = "";
+
+        try {
+          if (key.length < 7) {
+            throw new Error("Cheia trebuie să aibă cel puțin 7 caractere.");
+          }
+
+          let result;
+          if (operation === "encrypt") {
+            result = encrypt(message, key);
+          } else if (operation === "decrypt") {
+            result = decrypt(message, key);
+          }
+
+          resultElement.textContent = `Rezultatul este: ${result}`;
+        } catch (error) {
+          errorElement.textContent = error.message;
+        }
+      }
+    </script>
+  </body>
+</html>

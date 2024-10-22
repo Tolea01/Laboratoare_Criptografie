@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algoritmul Cezar</title>
+  </head>
+  <body>
+    <h1>Algoritmul Cezar</h1>
+
+    <label for="message">Introduceți mesajul:</label>
+    <input type="text" id="message" />
+
+    <label for="key">Introduceți cheia (1-25):</label>
+    <input type="number" id="key" min="1" max="25" />
+
+    <label for="operation">Alegeți operația:</label>
+    <select id="operation">
+      <option value="encrypt">Criptare</option>
+      <option value="decrypt">Decriptare</option>
+    </select>
+
+    <button id="submit">Execută</button>
+
+    <p id="result"></p>
+    <p id="error" style="color: red"></p>
+
+    <script>
+      function validateText(text) {
+        const validatedText = text.toUpperCase().replace(/[^A-Z]/g, "");
+        if (!validatedText) {
+          throw new Error(
+            "Textul trebuie să conțină doar litere între 'A' și 'Z'."
+          );
+        }
+        return validatedText;
+      }
+
+      function cezarCipher(text, key, operation = "encrypt") {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let result = "";
+
+        key = operation === "decrypt" ? -key : key;
+
+        for (let i = 0; i < text.length; i++) {
+          const currentChar = text[i];
+          const currentIndex = alphabet.indexOf(currentChar);
+          const newIndex = (currentIndex + key + 26) % 26;
+
+          result += alphabet[newIndex];
+        }
+
+        return result;
+      }
+
+      document.getElementById("submit").addEventListener("click", function () {
+        const messageInput = document.getElementById("message").value;
+        const keyInput = parseInt(document.getElementById("key").value);
+        const operation = document.getElementById("operation").value;
+
+        const resultElement = document.getElementById("result");
+        const errorElement = document.getElementById("error");
+
+        try {
+          resultElement.textContent = "";
+          errorElement.textContent = "";
+
+          const text = validateText(messageInput);
+
+          if (isNaN(keyInput) || keyInput < 1 || keyInput > 25) {
+            throw new Error("Cheia trebuie să fie un număr între 1 și 25.");
+          }
+
+          const result = cezarCipher(text, keyInput, operation);
+          resultElement.textContent = `Rezultatul: ${result}`;
+        } catch (error) {
+          errorElement.textContent = error.message;
+        }
+      });
+    </script>
+  </body>
+</html>

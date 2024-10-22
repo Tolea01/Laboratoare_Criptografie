@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algoritmul Cezar cu 2 Chei</title>
+  </head>
+  <body>
+    <h1>Algoritmul Cezar cu 2 Chei</h1>
+
+    <label for="message">Introduceți mesajul:</label>
+    <input type="text" id="message" />
+
+    <label for="key1">Introduceți cheia numerică (1-25):</label>
+    <input type="number" id="key1" min="1" max="25" />
+
+    <label for="key2">Introduceți cheia textuală (minim 7 litere):</label>
+    <input type="text" id="key2" />
+
+    <label for="operation">Alegeți operația:</label>
+    <select id="operation">
+      <option value="encrypt">Criptare</option>
+      <option value="decrypt">Decriptare</option>
+    </select>
+
+    <button id="submit">Execută</button>
+
+    <p id="result"></p>
+    <p id="error" style="color: red"></p>
+
+    <script>
+      function validateText(text) {
+        const validatedText = text.toUpperCase().replace(/[^A-Z]/g, "");
+        if (!validatedText) {
+          throw new Error(
+            "Textul trebuie să conțină doar litere între 'A' și 'Z'."
+          );
+        }
+        return validatedText;
+      }
+
+      function validateKey2(key2) {
+        const validatedKey2 = key2.toUpperCase().replace(/[^A-Z]/g, "");
+        if (validatedKey2.length < 7) {
+          throw new Error("Cheia 2 trebuie să aibă cel puțin 7 litere.");
+        }
+        return validatedKey2;
+      }
+
+      function cezarCipherWithTwoKeys(text, key1, key2, operation = "encrypt") {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let result = "";
+
+        key1 = operation === "decrypt" ? -key1 : key1;
+
+        for (let i = 0; i < text.length; i++) {
+          const currentChar = text[i];
+          const currentIndex = alphabet.indexOf(currentChar);
+          const key2Char = key2[i % key2.length];
+          const key2Shift = alphabet.indexOf(key2Char);
+          const newIndex = (currentIndex + key1 + key2Shift + 26) % 26;
+
+          result += alphabet[newIndex];
+        }
+
+        return result;
+      }
+
+      document.getElementById("submit").addEventListener("click", function () {
+        const messageInput = document.getElementById("message").value;
+        const key1Input = parseInt(document.getElementById("key1").value);
+        const key2Input = document.getElementById("key2").value;
+        const operation = document.getElementById("operation").value;
+
+        const resultElement = document.getElementById("result");
+        const errorElement = document.getElementById("error");
+
+        try {
+          resultElement.textContent = "";
+          errorElement.textContent = "";
+
+          const text = validateText(messageInput);
+          const key2 = validateKey2(key2Input);
+
+          if (isNaN(key1Input) || key1Input < 1 || key1Input > 25) {
+            throw new Error(
+              "Cheia numerică trebuie să fie un număr între 1 și 25."
+            );
+          }
+
+          const result = cezarCipherWithTwoKeys(
+            text,
+            key1Input,
+            key2,
+            operation
+          );
+          resultElement.textContent = `Rezultatul: ${result}`;
+        } catch (error) {
+          errorElement.textContent = error.message;
+        }
+      });
+    </script>
+  </body>
+</html>

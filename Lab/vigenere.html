@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vigenere</title>
+  </head>
+  <body>
+    <h2>Vigenère Cipher - Criptare / Decriptare</h2>
+
+    <label for="operation">Operația:</label>
+    <select id="operation">
+      <option value="encrypt">Criptare</option>
+      <option value="decrypt">Decriptare</option>
+    </select>
+    <br /><br />
+
+    <label for="message">Mesaj / Criptogramă:</label>
+    <textarea
+      id="message"
+      rows="4"
+      cols="50"
+      placeholder="Introdu mesajul..."
+    ></textarea>
+    <br /><br />
+
+    <label for="key">Cheie (minim 7 caractere):</label>
+    <input type="text" id="key" placeholder="Introdu cheia..." />
+    <br /><br />
+
+    <button onclick="processCipher()">Execută</button>
+
+    <p id="result"></p>
+    <p id="error" style="color: red"></p>
+
+    <script>
+      const alphabet = "AĂÂBCDEFGHIÎJKLMNOPQRSȘTȚUVWXYZ";
+      const alphabetSize = alphabet.length;
+
+      function validateText(text) {
+        const validCharacters = /^[A-Za-z]+$/;
+        if (!validCharacters.test(text)) {
+          throw new Error(
+            "Textul trebuie să conțină doar litere între 'A' și 'Z', 'a' și 'z'."
+          );
+        }
+      }
+
+      function validateKey(key) {
+        if (key.length < 7) {
+          throw new Error("Cheia trebuie să aibă cel puțin 7 caractere.");
+        }
+        validateText(key);
+      }
+
+      function preprocessText(text) {
+        return text.replace(/\s+/g, "").toUpperCase();
+      }
+
+      function encrypt(message, key) {
+        validateKey(key);
+        message = preprocessText(message);
+        key = preprocessText(key);
+
+        let encryptedMessage = "";
+        for (let i = 0; i < message.length; i++) {
+          const messageCharIndex = alphabet.indexOf(message[i]);
+          const keyCharIndex = alphabet.indexOf(key[i % key.length]);
+
+          if (messageCharIndex === -1 || keyCharIndex === -1) {
+            throw new Error("Caracter invalid în text sau în cheie.");
+          }
+
+          const encryptedIndex =
+            (messageCharIndex + keyCharIndex) % alphabetSize;
+          encryptedMessage += alphabet[encryptedIndex];
+        }
+        return encryptedMessage;
+      }
+
+      function decrypt(encryptedMessage, key) {
+        validateKey(key);
+        encryptedMessage = preprocessText(encryptedMessage);
+        key = preprocessText(key);
+
+        let decryptedMessage = "";
+        for (let i = 0; i < encryptedMessage.length; i++) {
+          const encryptedCharIndex = alphabet.indexOf(encryptedMessage[i]);
+          const keyCharIndex = alphabet.indexOf(key[i % key.length]);
+
+          if (encryptedCharIndex === -1 || keyCharIndex === -1) {
+            throw new Error("Caracter invalid în criptogramă sau în cheie.");
+          }
+
+          const decryptedIndex =
+            (encryptedCharIndex - keyCharIndex + alphabetSize) % alphabetSize;
+          decryptedMessage += alphabet[decryptedIndex];
+        }
+        return decryptedMessage;
+      }
+
+      function processCipher() {
+        const operation = document.getElementById("operation").value;
+        const key = document.getElementById("key").value;
+        const message = document.getElementById("message").value;
+        const resultElement = document.getElementById("result");
+        const errorElement = document.getElementById("error");
+
+        resultElement.innerHTML = "";
+        errorElement.innerHTML = "";
+
+        try {
+          let result;
+          if (operation === "encrypt") {
+            result = encrypt(message, key);
+            resultElement.innerHTML = "<strong>Criptogramă:</strong> " + result;
+          } else if (operation === "decrypt") {
+            result = decrypt(message, key);
+            resultElement.innerHTML =
+              "<strong>Mesaj decriptat:</strong> " + result;
+          }
+        } catch (error) {
+          errorElement.innerHTML = error.message;
+        }
+      }
+    </script>
+  </body>
+</html>
